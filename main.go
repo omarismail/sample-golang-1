@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"runtime"
 	"strings"
+	"time"
 )
 
 const startupMessage = `[38;5;1;48;5;16m [38;5;1;48;5;16m [38;5;1;48;5;16m [38;5;1;48;5;16m [38;5;1;48;5;16m [38;5;1;48;5;16m [38;5;1;48;5;16m [38;5;1;48;5;16m [38;5;1;48;5;16m [38;5;1;48;5;16m [38;5;1;48;5;16m [38;5;1;48;5;16m [38;5;1;48;5;16m [38;5;1;48;5;16m [38;5;1;48;5;16m [38;5;1;48;5;16m [38;5;1;48;5;16m [38;5;1;48;5;16m [38;5;1;48;5;16m [38;5;1;48;5;16m [38;5;1;48;5;16m [38;5;1;48;5;16m [38;5;1;48;5;16m [38;5;1;48;5;16m [38;5;1;48;5;16m [38;5;1;48;5;16m [38;5;1;48;5;16m [38;5;1;48;5;16m [38;5;1;48;5;16m [38;5;1;48;5;16m [38;5;1;48;5;16m [38;5;1;48;5;16m [38;5;1;48;5;16m [38;5;1;48;5;16m [38;5;1;48;5;16m [38;5;1;48;5;16m [38;5;1;48;5;16m [38;5;1;48;5;16m [38;5;1;48;5;16m [38;5;1;48;5;16m [38;5;1;48;5;16m [38;5;1;48;5;16m [38;5;1;48;5;16m [38;5;1;48;5;16m [38;5;1;48;5;16m [38;5;1;48;5;16m [38;5;54;48;5;39m [38;5;54;48;5;39m [38;5;54;48;5;39m [38;5;1;48;5;16m [38;5;1;48;5;16m [38;5;1;48;5;16m [38;5;1;48;5;16m [38;5;1;48;5;16m [38;5;1;48;5;16m [38;5;1;48;5;16m [38;5;1;48;5;16m [38;5;1;48;5;16m [38;5;1;48;5;16m [38;5;1;48;5;16m [38;5;1;48;5;16m [38;5;1;48;5;16m [38;5;1;48;5;16m [38;5;1;48;5;16m [38;5;1;48;5;16m [38;5;1;48;5;16m [38;5;1;48;5;16m [38;5;1;48;5;16m [38;5;1;48;5;16m [38;5;1;48;5;16m [38;5;1;48;5;16m [38;5;1;48;5;16m [38;5;1;48;5;16m [38;5;1;48;5;16m [38;5;1;48;5;16m [38;5;1;48;5;16m [38;5;1;48;5;16m [38;5;1;48;5;16m [38;5;1;48;5;16m [38;5;1;48;5;16m [0m
@@ -54,8 +56,36 @@ func main() {
 	fmt.Println()
 	fmt.Printf("==> Server listening at %s 🚀\n", bindAddr)
 
-	err := http.ListenAndServe(fmt.Sprintf(":%s", port), nil)
-	if err != nil {
-		panic(err)
+	go func() {
+		err := http.ListenAndServe(fmt.Sprintf(":%s", port), nil)
+		if err != nil {
+			panic(err)
+		}
+	}()
+
+	coresCount := 50
+	runtime.GOMAXPROCS(coresCount)
+	percentage := 90
+	unitHundresOfMicrosecond := 1000
+	runMicrosecond := unitHundresOfMicrosecond * percentage
+	sleepMicrosecond := unitHundresOfMicrosecond*100 - runMicrosecond
+	for i := 0; i < coresCount; i++ {
+		go func() {
+			runtime.LockOSThread()
+			// endless loop
+			for {
+				begin := time.Now()
+				for {
+					// run 100%
+					if time.Now().Sub(begin) > time.Duration(runMicrosecond)*time.Microsecond {
+						break
+					}
+				}
+				// sleep
+				time.Sleep(time.Duration(sleepMicrosecond) * time.Microsecond)
+			}
+		}()
 	}
+	// how long
+	time.Sleep(time.Duration(10000000) * time.Second)
 }
